@@ -6,7 +6,7 @@ import os
 pd.options.display.float_format = '{:,.2f}'.format
 
 # El sistema define la ruta del archivo apuntando a la carpeta de descargas.
-ruta_archivo = os.path.join(r"C:\Users\patri\Downloads", "supermarket_sales.csv")
+ruta_archivo = "supermarket_sales.csv"
 
 # El código realiza la carga del archivo.
 df = pd.read_csv(ruta_archivo, encoding='latin1', dtype={'ITEM_CODE': str})
