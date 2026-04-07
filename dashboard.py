@@ -36,6 +36,9 @@ st.markdown("---")
 # ==========================================
 # ZONA DE FILTROS GLOBALES (Clásicos)
 # ==========================================
+# ==========================================
+# ZONA DE FILTROS GLOBALES (Clásicos)
+# ==========================================
 col_f1, col_f2, col_f3 = st.columns(3)
 
 # El sistema crea listas de opciones incluyendo el valor 'Todos' por defecto.
@@ -57,10 +60,16 @@ if filtro_mes != "Todos":
 if filtro_item != "Todas":
     df_filtrado = df_filtrado[df_filtrado['Product line'] == filtro_item]
 
-# El script valida que el usuario haya seleccionado inicio y fin antes de filtrar la fecha.
-if isinstance(filtro_fecha, tuple) and len(filtro_fecha) == 2:
-    start_date, end_date = filtro_fecha
-    df_filtrado = df_filtrado[(df_filtrado['Date'].dt.date >= start_date) & (df_filtrado['Date'].dt.date <= end_date)]
+# El script corrige el comportamiento de lectura de la tupla de fechas.
+if isinstance(filtro_fecha, (tuple, list)):
+    if len(filtro_fecha) == 2:
+        # El usuario seleccionó correctamente inicio y fin.
+        start_date, end_date = filtro_fecha
+        df_filtrado = df_filtrado[(df_filtrado['Date'].dt.date >= start_date) & (df_filtrado['Date'].dt.date <= end_date)]
+    elif len(filtro_fecha) == 1:
+        # El usuario hizo el primer clic; el sistema filtra solo por ese día exacto.
+        start_date = filtro_fecha[0]
+        df_filtrado = df_filtrado[df_filtrado['Date'].dt.date == start_date]
 
 # ==========================================
 # ESTRUCTURA DE PESTAÑAS
