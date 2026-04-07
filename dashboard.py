@@ -30,7 +30,7 @@ df['Month'] = df['Date'].dt.month
 # ==========================================
 st.title("Reporte Operativo y Financiero de Ventas")
 st.markdown("**Entidad:** Cadena de Supermercados | **Unidad:** Consolidado Nacional | **Moneda:** USD")
-st.caption(f"📅 Fecha de emisión: {date.today().strftime('%d/%m/%Y')} | 👤 Analista: Patrick Salvador Hernández Arias (Matrícula: 010812145) | 📚 Fuente: Kaggle")
+st.caption(f"📅 Fecha de emisión: {date.today().strftime('%d/%m/%Y')} | 👤 Analista: Patrick Salvador Hernández Arias | 📚 Fuente: Kaggle")
 st.markdown("---")
 
 # ==========================================
