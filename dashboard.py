@@ -1,17 +1,18 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+from datetime import date
 
 # El intérprete configura el formato general para los números flotantes.
 pd.options.display.float_format = '{:,.2f}'.format
 
-# El sistema establece la configuración de la página y oculta el menú predeterminado para mayor limpieza.
-st.set_page_config(page_title="Panel de Ventas Institucional", layout="wide")
+# El sistema establece la configuración de la página y oculta elementos innecesarios.
+st.set_page_config(page_title="Reporte de Ventas", layout="wide")
 
 # El script define la ruta relativa para el entorno en la nube.
 ruta_archivo = "supermarket_sales_M23 y M40 (1).csv"
 
-# La aplicación ejecuta la carga del archivo en formato estándar.
+# La aplicación ejecuta la carga del archivo asegurando la lectura correcta.
 df = pd.read_csv(ruta_archivo, encoding='utf-8', dtype={'ITEM_CODE': str})
 
 # 1. Para ver los datos
@@ -20,57 +21,79 @@ print(df.head())
 # 2. Para ver los nombres EXACTOS de las columnas
 print(df.columns.tolist())
 
-# El programa transforma la columna de fechas para habilitar análisis temporales.
+# El programa procesa la columna temporal para habilitar las comparaciones.
 df['Date'] = pd.to_datetime(df['Date'])
 df['Month'] = df['Date'].dt.month
 
-# La interfaz dibuja el título general con una estructura jerárquica clara.
+# ==========================================
+# ENCABEZADO INSTITUCIONAL (Norma IBCS)
+# ==========================================
 st.title("Reporte Operativo y Financiero de Ventas")
+st.markdown("**Entidad:** Cadena de Supermercados | **Unidad:** Consolidado Nacional | **Moneda:** USD")
+st.caption(f"📅 Fecha de emisión: {date.today().strftime('%d/%m/%Y')} | 👤 Analista: Patrick Salvador Hernández Arias (Matrícula: 010812145) | 📚 Fuente: Kaggle")
 st.markdown("---")
 
-tab1, tab2, tab3, tab4 = st.tabs([
-    "1. Análisis de Facturación", 
-    "2. Volumetría Temporal", 
-    "3. Ranking Categórico", 
-    "4. KPIs Estratégicos"
+# ==========================================
+# ZONA DE FILTROS GLOBALES (Clásicos)
+# ==========================================
+col_f1, col_f2, col_f3 = st.columns(3)
+
+# El sistema crea listas de opciones incluyendo el valor 'Todos' por defecto.
+opciones_mes = ["Todos"] + sorted(df['Month'].unique().tolist())
+opciones_item = ["Todas"] + sorted(df['Product line'].unique().tolist())
+
+filtro_mes = col_f1.selectbox("Filtro: Mes", options=opciones_mes)
+filtro_item = col_f2.selectbox("Filtro: Línea de Producto", options=opciones_item)
+
+min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
+filtro_fecha = col_f3.date_input("Filtro: Rango de Fechas", value=(min_date, max_date))
+
+# El algoritmo evalúa y aplica los filtros seleccionados de forma dinámica.
+df_filtrado = df.copy()
+
+if filtro_mes != "Todos":
+    df_filtrado = df_filtrado[df_filtrado['Month'] == filtro_mes]
+
+if filtro_item != "Todas":
+    df_filtrado = df_filtrado[df_filtrado['Product line'] == filtro_item]
+
+# El script valida que el usuario haya seleccionado inicio y fin antes de filtrar la fecha.
+if isinstance(filtro_fecha, tuple) and len(filtro_fecha) == 2:
+    start_date, end_date = filtro_fecha
+    df_filtrado = df_filtrado[(df_filtrado['Date'].dt.date >= start_date) & (df_filtrado['Date'].dt.date <= end_date)]
+
+# ==========================================
+# ESTRUCTURA DE PESTAÑAS
+# ==========================================
+tab1, tab2, tab3 = st.tabs([
+    "1. Resumen Ejecutivo (KPIs y Facturación)", 
+    "2. Volumetría Operativa", 
+    "3. Ranking de Categorías"
 ])
 
 # ==========================================
-# PESTAÑA 1: Reporte de ventas y factura
+# PESTAÑA 1: KPIs y Facturación
 # ==========================================
 with tab1:
-    st.subheader("Ingresos y Facturación Promedio")
+    st.subheader("Indicadores Clave de Rendimiento")
     
-    col_f1, col_f2, col_f3 = st.columns(3)
-    filtro_mes_t1 = col_f1.multiselect("Filtro: Mes", options=df['Month'].unique(), default=df['Month'].unique(), key='m1')
-    filtro_item_t1 = col_f2.multiselect("Filtro: Línea de Producto", options=df['Product line'].unique(), default=df['Product line'].unique(), key='i1')
+    k1, k2, k3 = st.columns(3)
+    k1.metric("Ingreso Operativo Total", f"${df_filtrado['Total'].sum():,.2f}")
+    k2.metric("Ticket Promedio Consolidado", f"${df_filtrado['Total'].mean():,.2f}")
+    k3.metric("Total de Operaciones", f"{len(df_filtrado):,}")
     
-    min_date, max_date = df['Date'].min(), df['Date'].max()
-    filtro_fecha_t1 = col_f3.date_input("Filtro: Rango de Fechas", value=(min_date, max_date), key='f1')
-    
-    # El algoritmo aplica los parámetros de reducción al dataframe.
-    df_t1 = df[
-        (df['Month'].isin(filtro_mes_t1)) & 
-        (df['Product line'].isin(filtro_item_t1))
-    ]
-    
-    m1, m2 = st.columns(2)
-    m1.metric("Ventas Totales Netas", f"${df_t1['Total'].sum():,.2f}")
-    m2.metric("Valor del Ticket Promedio", f"${df_t1['Total'].mean():,.2f}")
-    
-    st.dataframe(df_t1[['Date', 'Invoice ID', 'Product line', 'Total']], use_container_width=True)
+    st.markdown("---")
+    st.subheader("Desglose de Facturación")
+    st.dataframe(df_filtrado[['Date', 'Invoice ID', 'Product line', 'Total']], use_container_width=True)
 
 # ==========================================
 # PESTAÑA 2: Volumetría y clientes
 # ==========================================
 with tab2:
-    st.subheader("Volumen Operativo por Periodo")
-    
-    filtro_mes_t2 = st.multiselect("Selección de Periodo", options=df['Month'].unique(), default=df['Month'].unique(), key='m2')
-    df_t2 = df[df['Month'].isin(filtro_mes_t2)]
+    st.subheader("Volumen Operativo Temporal")
     
     # El código consolida las métricas de tráfico.
-    volumetria = df_t2.groupby('Month').agg(
+    volumetria = df_filtrado.groupby('Month').agg(
         Total_Ventas=('Invoice ID', 'count'),
         Clientes_Unicos=('Invoice ID', 'nunique')
     ).reset_index()
@@ -79,65 +102,35 @@ with tab2:
     with col_v1:
         st.dataframe(volumetria, use_container_width=True)
     with col_v2:
-        # El sistema grafica series de tiempo mediante columnas verticales sobrias, eliminando cuadrículas.
+        # El sistema grafica usando columnas verticales en escala de grises.
         grafico_volumen = alt.Chart(volumetria).mark_bar(color='#595959', size=40).encode(
-            x=alt.X('Month:O', title='', axis=alt.Axis(labelAngle=0, grid=False)),
-            y=alt.Y('Total_Ventas:Q', title='', axis=alt.Axis(grid=False)),
+            x=alt.X('Month:O', title='Mes del Año', axis=alt.Axis(labelAngle=0, grid=False)),
+            y=alt.Y('Total_Ventas:Q', title='Número de Ventas', axis=alt.Axis(grid=False)),
             tooltip=['Month', 'Total_Ventas']
         ).configure_view(strokeWidth=0).properties(height=350)
         
         st.altair_chart(grafico_volumen, use_container_width=True)
 
 # ==========================================
-# PESTAÑA 3: Ranking TOP 10 mensual
+# PESTAÑA 3: Ranking Categórico
 # ==========================================
 with tab3:
-    st.subheader("Ranking de Desplazamiento por Línea de Producto")
+    st.subheader("Desplazamiento por Línea de Producto (TOP 10)")
     
-    col_r1, col_r2 = st.columns(2)
-    filtro_mes_t3 = col_r1.selectbox("Mes de Evaluación", options=df['Month'].unique(), key='m3')
-    criterio_t3 = col_r2.selectbox("Métrica Base", options=['Total', 'Quantity'], key='c3')
+    criterio_t3 = st.selectbox("Métrica Base para el Ranking", options=['Total', 'Quantity'])
     
-    df_t3 = df[df['Month'] == filtro_mes_t3]
+    # El script aísla la muestra superior respetando los filtros globales.
+    top_10 = df_filtrado.groupby('Product line')[criterio_t3].sum().nlargest(10).reset_index()
     
-    # El script aísla la muestra superior para el análisis categórico.
-    top_10 = df_t3.groupby('Product line')[criterio_t3].sum().nlargest(10).reset_index()
-    
-    col_r3, col_r4 = st.columns([1, 2])
-    with col_r3:
+    col_r1, col_r2 = st.columns([1, 2])
+    with col_r1:
         st.dataframe(top_10, use_container_width=True)
-    with col_r4:
-        # El programa genera barras horizontales estructuradas en orden descendente, estándar para categorías.
+    with col_r2:
+        # El programa renderiza barras horizontales para datos categóricos (Norma IBCS).
         grafico_ranking = alt.Chart(top_10).mark_bar(color='#404040').encode(
-            x=alt.X(f'{criterio_t3}:Q', title='', axis=alt.Axis(grid=False)),
+            x=alt.X(f'{criterio_t3}:Q', title='Valor', axis=alt.Axis(grid=False)),
             y=alt.Y('Product line:N', title='', sort='-x', axis=alt.Axis(labelLimit=200, grid=False)),
             tooltip=['Product line', criterio_t3]
         ).configure_view(strokeWidth=0).properties(height=350)
         
         st.altair_chart(grafico_ranking, use_container_width=True)
-
-# ==========================================
-# PESTAÑA 4: Reporte de KPIs Generales
-# ==========================================
-with tab4:
-    st.subheader("Tablero de Indicadores de Rendimiento")
-    
-    filtro_mes_t4 = st.multiselect("Cobertura Temporal", options=df['Month'].unique(), default=df['Month'].unique(), key='m4')
-    df_t4 = df[df['Month'].isin(filtro_mes_t4)]
-    
-    k1, k2 = st.columns(2)
-    k1.metric("1) Ingreso Operativo Total", f"${df_t4['Total'].sum():,.2f}")
-    k2.metric("2) Ticket Promedio Consolidado", f"${df_t4['Total'].mean():,.2f}")
-    
-    st.markdown("---")
-    col_k3, col_k4 = st.columns(2)
-    
-    with col_k3:
-        st.markdown("##### 3) Impacto de Ingresos (TOP 20)")
-        top_20_ventas = df_t4.groupby('Product line')['Total'].sum().nlargest(20).reset_index()
-        st.dataframe(top_20_ventas, use_container_width=True)
-        
-    with col_k4:
-        st.markdown("##### 4) Rotación de Inventario (Total)")
-        top_unidades = df_t4.groupby('Product line')['Quantity'].sum().sort_values(ascending=False).reset_index()
-        st.dataframe(top_unidades, use_container_width=True)
