@@ -5,19 +5,19 @@ import os
 # El intérprete configura el formato general para los números flotantes.
 pd.options.display.float_format = '{:,.2f}'.format
 
-# El sistema establece la configuración de la página (solo se puede llamar una vez).
+# El sistema establece la configuración de la página.
 st.set_page_config(page_title="Panel de Ventas EBAC", layout="wide")
 
-# El script define la ruta apuntando al directorio de descargas local.
-ruta_archivo = os.path.join(r"C:\Users\patri\Downloads", "supermarket_sales_M23 y M40 (1).csv")
+# El script define la ruta relativa para compatibilidad con el servidor de la nube.
+ruta_archivo = "supermarket_sales_M23 y M40 (1).csv"
 
-# La aplicación ejecuta la carga del archivo usando utf-8 por instrucciones recientes.
+# La aplicación ejecuta la carga del archivo usando la codificación correcta.
 df = pd.read_csv(ruta_archivo, encoding='utf-8', dtype={'ITEM_CODE': str})
 
-# 1. Para ver los datos
+# 1. Para ver los datos (Este diagnóstico se imprimirá en los logs de la nube)
 print(df.head())
 
-# 2. Para ver los nombres EXACTOS de las columnas (sin recortes)
+# 2. Para ver los nombres EXACTOS de las columnas
 print(df.columns.tolist())
 
 # El programa transforma la columna de fechas para habilitar análisis temporales.
