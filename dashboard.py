@@ -3,14 +3,14 @@ import streamlit as st
 import plotly.express as px
 import os
 
-# Establece el formato general de visualización.
+# Configura el formato general de visualización.
 pd.options.display.float_format = '{:,.2f}'.format
 
 @st.cache_data
 def load_data():
     # Define las rutas para entorno local y nube.
     local_path = os.path.join(r'C:\Users\patri\Downloads', 'supermarket_sales.csv')
-    cloud_path = 'supermarket_sales - Sheet1.csv' 
+    cloud_path = 'supermarket_sales.csv' 
     
     # Evalúa el entorno para asignar la ruta.
     if os.path.exists(local_path):
@@ -18,11 +18,12 @@ def load_data():
     else:
         path = cloud_path
         
-    # Ejecuta el protocolo de carga de archivos.
-    df = pd.read_csv(path, encoding='UTF-8', dtype={'ITEM_CODE': str})
+    # Carga el archivo.
+    df = pd.read_csv(path, encoding='latin1', dtype={'ITEM_CODE': str})
     
-    # Ejecuta el diagnóstico de verificación.
+    # 1. Para ver los datos
     print(df.head())
+    # 2. Para ver los nombres EXACTOS de las columnas (sin recortes)
     print(df.columns.tolist())
     
     # Procesa las fechas para el análisis temporal.
@@ -40,7 +41,7 @@ def main():
     try:
         df = load_data()
     except FileNotFoundError:
-        st.error("Error: El archivo CSV no se encuentra. Asegúrate de que 'supermarket_sales - Sheet1.csv' esté en el repositorio.")
+        st.error("Error: El archivo CSV no se encuentra. Asegúrate de usar el nombre exacto en GitHub.")
         st.stop()
     
     # Genera los filtros globales en la barra lateral.
