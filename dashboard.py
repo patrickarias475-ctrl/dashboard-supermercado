@@ -9,7 +9,7 @@ pd.options.display.float_format = '{:,.2f}'.format
 @st.cache_data
 def load_data():
     # Define las rutas para entorno local y nube.
-    local_path = os.path.join(r'C:\Users\patri\Downloads', 'supermarket_sales - Sheet1.csv')
+    local_path = os.path.join(r'C:\Users\patri\Downloads', 'supermarket_sales.csv')
     cloud_path = 'supermarket_sales - Sheet1.csv' 
     
     # Evalúa el entorno para asignar la ruta.
