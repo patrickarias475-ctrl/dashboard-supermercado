@@ -1,7 +1,6 @@
 # 📊 Análisis Avanzado de Ventas: Supermercado
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Status-Activo-brightgreen?style=for-the-badge" alt="Status">
   <img src="https://img.shields.io/badge/Tool-Streamlit-red?style=for-the-badge&logo=streamlit" alt="Streamlit">
   <img src="https://img.shields.io/badge/Standard-IBCS-black?style=for-the-badge" alt="IBCS">
 </div>
